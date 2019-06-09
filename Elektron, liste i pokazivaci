@@ -1,0 +1,89 @@
+#include <stdio.h>
+#include<string.h>
+
+
+char* ucitaj(char* p) {
+	char c;
+	int i = 0;
+	char* pom;
+
+	while ((c = getchar()) != '\n') { // !=, negacija jedanko, 1 je kad nije jednako
+		if (i % 10 == 0) { // 10 jer realociranje traje dugo pa zato pravimo balans izmedju brzine i kor memorije
+			pom = realloc(p, (i + 10) * sizeof(char));
+			if (pom == NULL){ // znaci da pom ne pokazuje ni na sta, nema dovoljno memorije
+				printf("Neuspesna realokacija"); // ne mozemo da nastavimo s programom
+				exit(1);
+			}
+			else
+				p = pom;
+		}
+		p[i++] = c;
+	}
+	// ako imamo rec koje je ucitana koja je manja od naseg "koraka" (po 10 memorija charova)
+	//onda moramo da se resimo "viska" 
+	pom = realloc(p, (i + 1) * sizeof(char));
+	if (pom == NULL) { 
+		printf("Neuspesna realokacija"); 
+		exit(1);
+	}
+	else
+		p = pom;
+	p[i] = '\0'; // nas niz charova koji nam glumi string mora da se zavrsava s '\0'
+
+	return p; // bez ovoga dzabe poso ovde se vraca vrednost funkcije, def u zaglavlju
+}
+
+void stampaj(char **p, int n) {
+	for (int i = 0; i < n; i++) {
+		printf("%s\n", p[i]);
+	}
+}
+
+
+int main(){
+
+	char **a, *t;
+	int n, i, j;
+
+
+	while (1) {
+		printf("Unesite br gradova, nula za izlaz! \n");
+		scanf("%d", &n);
+		getchar(); // mora do pokupi enter i da ne radi nista s njim da prvi grad ne bude "enter znak"
+
+		if (n < 0) {
+			printf("Nekorektan unos pokusajte ponovo! \n");
+				continue;
+		}
+		if (n == 0) {
+			printf("Dovidjenja :(");
+			break;
+		}
+	
+		a = calloc(n, sizeof(char*)); // caloc radi tako sto ono n oznacava broj mesta, a sizeof(stagod) memoriju jednogmesta
+
+		for (i = 0; i < n; i++) {
+			printf("Unesite ime %d. grada \n", i+1); // i krece od 0 pa i+1 da ispisuje logicnije za ljude
+			a[i] = ucitaj(a[i]); // e sad on popunjava onaj niz pokazivaca na pokazivace koji pokazuju na charove
+								// sa odgovarajucim pokazivacem na deo memorije sa nizom charova
+		}
+		printf("Gradovi pre sortiranja: \n");
+		stampaj(a, n);
+
+		// sortiranje leksikografski
+		for (i = 0; i < n - 1; i++)
+			for(j=i+1; j<n; j++)
+				if (strcmp(a[i], a[j]) > 0) {
+					t = a[i];
+					a[i] = a[j];
+					a[j] = t;
+				}//strcmp, vraca 0 ako su isti, manje od nule ako je prvi manji od drugog, vece od nule ako je prvi veci od drugog, bukv kao da oduzme leksikografsku vrednost drugog od prvog...
+										//poredimo stringove sa strcmp, dva stringa a[i] i a[j]
+										// sad jer nam a[i] i a[j] vracaju leksikografsku vrednost prvog elementa naseg niza charova,
+										//valjda jer a[ na primer 3] pokazuje na pokazivac na charove koji pokazuje na p[0] jer to jedino ima smisla
+		printf("Gradovi posle sortiranja: \n");
+		stampaj(a, n);
+
+	}
+
+}
