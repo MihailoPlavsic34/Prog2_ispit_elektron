@@ -57,54 +57,54 @@ Element* ucitaj(Element *p, int n) {
 		if (p == NULL) //p je ono sto mi prosledjujemo iz glavnog programa, u pocetku ce to biti NULL
 			p = novi; //posle prve iteracije p nece vise biti NULL jer smo rekli da je sad p = novi
 		else
-			stari->sledeci = novi;
+			stari->sledeci = novi;//sad moramo da se postaramo da je uvezan u listu
 
-		stari = novi;
+		stari = novi;//sad je element koji smo upravo napravili novi "stari"
 	}
-	return p;
+	return p;//lepo bi bilo da vratimo nesto iz ove funkcije
 }
 
 void stampaj(Element *p) {
 
 	while (p) {
-		puts(p->ime); puts(p->prezime);
-		printf("%f", p->prosek);
-		p = p ->sledeci;
+		puts(p->ime); puts(p->prezime);//ova puts je neka funkcija koja stavlja charove, stavlja i \n kad napise sto je lepo
+		printf("%f\n", p->prosek);
+		p = p ->sledeci;//idemo na sledeci i picimo do NULL-a
 	}
 }
 
 Element* brisi(Element *p) {
 	Element *stari;
 	while (p) {
-		stari = p;
-		p = p->sledeci; 
-		free(stari);	
+		stari = p; //njega cemo da brisemo a moramo da sacuvamo informaciju koji je sledeci
+		p = p->sledeci; //zato skocimo a brisemo ono na sta pokazuje stari
+		free(stari);	//sto je upravo element p
 	}
 
 }
 
-Element * obradi(Element *p) {
-	double s = 0;
+Element * obradi(Element *p) { //ovo je sad malo jebenije
+	double s = 0; 
 	int i = 0;
 	Element *prvi = p, *pret, *tek, *stari;
 
 	tek = prvi;
 	while (tek) {
 		s += tek->prosek; i++;
-		tek = tek->sledeci;
+		tek = tek->sledeci; //samo nacin da dobijemo prosek svih proseka
 	}
 	s /= i;
 
-	tek = prvi; pret = NULL;
-	if (tek->prosek < s) {
-		if (pret == NULL) {
-			stari = tek;
+	tek = prvi; pret = NULL; //postavljamo se na pocetak liste tekuci je sad prvi, znaci pret je NULL
+	if (tek->prosek < s) { //u elementu na koji pokazuje tek pristupamo polju prosek i gledamo dal je manje od s
+		if (pret == NULL) {//ako jeste onda bi moramo da vidimo dal je to prvi element
+			stari = tek; //kako smo pret stavili na NULL ulazimo i radimo zamenu
 			tek = tek->sledeci;
 			prvi = tek;
 			free(stari);
 		}
 		else {
-			stari = tek;
+			stari = tek;//ista prica ko u prvom samo sad povezujemo prethodni i njegov novi sledeci nas tekuci
 			tek = tek->sledeci;
 			pret->sledeci = tek;
 			free(stari);
@@ -112,15 +112,15 @@ Element * obradi(Element *p) {
 	
 	}
 	else {
-		pret = tek;
+		pret = tek;//ovo je kad preskacemo elemente koje je treba da izbacujemo
 		tek = tek->sledeci;
 	
 	}
-	return prvi;
+	return prvi;//vracamo glavu i sve je ok
 }
 
 int main() {
-	Element *glava = NULL;
+	Element *glava = NULL;//na pocetku je glava ili prvi element liste povezana ni sa cim
 
 	while (1) {
 
@@ -129,7 +129,7 @@ int main() {
 			"\n3. Brisanje liste"
 			"\n4. Izbacivanje losih studenata"
 			"\n0. Izlaz iz programa"
-			"\nVas izbor?\n");
+			"\nVas izbor?\n");//nema sta nejasno ja msm
 		int n, izbor;
 		scanf("%d", &izbor);
 		getchar();
@@ -142,7 +142,7 @@ int main() {
 		case 1:
 			printf("n?\n");
 			scanf("%d", &n);
-			getchar();
+			getchar();//zbog onog ucitavanja preko funkcije ucitaj da getchar ne pokupi enter i sjebe sve
 			glava = ucitaj(glava, n);
 			break;
 		case 2:
