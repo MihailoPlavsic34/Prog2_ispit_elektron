@@ -1,0 +1,162 @@
+#include <stdio.h>
+#include <string.h>
+
+
+char* citaj(char* p) {
+	char c;
+	int i = 0;
+	char* pom;
+
+	while ((c = getchar()) != '\n') { // !=, negacija jedanko, 1 je kad nije jednako
+		if (i % 10 == 0) { // 10 jer realociranje traje dugo pa zato pravimo balans izmedju brzine i kor memorije
+			pom = realloc(p, (i + 10) * sizeof(char));
+			if (pom == NULL) { // znaci da pom ne pokazuje ni na sta, nema dovoljno memorije
+				printf("Neuspesna realokacija"); // ne mozemo da nastavimo s programom
+				exit(1);
+			}
+			else
+				p = pom;
+		}
+		p[i++] = c;
+	}
+	// ako imamo rec koje je ucitana koja je manja od naseg "koraka" (po 10 memorija charova)
+	//onda moramo da se resimo "viska" 
+	pom = realloc(p, (i + 1) * sizeof(char));
+	if (pom == NULL) {
+		printf("Neuspesna realokacija");
+		exit(1);
+	}
+	else
+		p = pom;
+	p[i] = '\0'; // nas niz charova koji nam glumi string mora da se zavrsava s '\0'
+
+	return p; // bez ovoga dzabe poso ovde se vraca vrednost funkcije, def u zaglavlju
+}
+
+typedef struct element {
+	char *ime, *prezime;
+	double prosek;
+	struct element *sledeci;
+} Element;
+
+Element* ucitaj(Element *p, int n) {
+	Element *novi, *stari;
+	int i;
+
+	for (i = 0; i < n; i++) {
+		novi = calloc(sizeof(Element)); // pravimo novi element nase liste, koji je structura Element
+		printf("%d. ime?", i+1);
+		novi->ime = citaj(novi->ime);
+		printf("%d. prezime?", i + 1);//popunjavamo pomocu one nase funkcije iz prethodnog programa
+		novi->prezime = citaj(novi->prezime);
+		printf("%d. prosek?", i + 1);
+		scanf("%lf", &novi->prosek);
+		getchar();
+		novi->sledeci = NULL; //kako svaki nas "novi" element ide na kraj liste mora bit vezan u NULL
+
+		if (p == NULL) //p je ono sto mi prosledjujemo iz glavnog programa, u pocetku ce to biti NULL
+			p = novi; //posle prve iteracije p nece vise biti NULL jer smo rekli da je sad p = novi
+		else
+			stari->sledeci = novi;
+
+		stari = novi;
+	}
+	return p;
+}
+
+void stampaj(Element *p) {
+
+	while (p) {
+		puts(p->ime); puts(p->prezime);
+		printf("%f", p->prosek);
+		p = p ->sledeci;
+	}
+}
+
+Element* brisi(Element *p) {
+	Element *stari;
+	while (p) {
+		stari = p;
+		p = p->sledeci; 
+		free(stari);	
+	}
+
+}
+
+Element * obradi(Element *p) {
+	double s = 0;
+	int i = 0;
+	Element *prvi = p, *pret, *tek, *stari;
+
+	tek = prvi;
+	while (tek) {
+		s += tek->prosek; i++;
+		tek = tek->sledeci;
+	}
+	s /= i;
+
+	tek = prvi; pret = NULL;
+	if (tek->prosek < s) {
+		if (pret == NULL) {
+			stari = tek;
+			tek = tek->sledeci;
+			prvi = tek;
+			free(stari);
+		}
+		else {
+			stari = tek;
+			tek = tek->sledeci;
+			pret->sledeci = tek;
+			free(stari);
+		}
+	
+	}
+	else {
+		pret = tek;
+		tek = tek->sledeci;
+	
+	}
+	return prvi;
+}
+
+int main() {
+	Element *glava = NULL;
+
+	while (1) {
+
+		printf("\n1. Ucitavanje liste"
+			"\n2. Stampanje liste"
+			"\n3. Brisanje liste"
+			"\n4. Izbacivanje losih studenata"
+			"\n0. Izlaz iz programa"
+			"\nVas izbor?\n");
+		int n, izbor;
+		scanf("%d", &izbor);
+		getchar();
+
+		switch (izbor) {
+		case 0:
+			printf("Uspesno ste izasli iz programa!");
+			exit(1);
+
+		case 1:
+			printf("n?\n");
+			scanf("%d", &n);
+			getchar();
+			glava = ucitaj(glava, n);
+			break;
+		case 2:
+			stampaj(glava);
+			break;
+		case 3:
+			glava = brisi(glava);
+			break;
+		case 4: //losi studenti oni koji imaju prosek koji je manji od proseka svih proseka 		
+			glava = obradi(glava);
+			break;
+		default:
+			printf("\nNekorektan unos probajte ponovo!");
+		}
+
+	}
+}
