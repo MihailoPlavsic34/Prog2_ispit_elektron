@@ -1,0 +1,118 @@
+#include <stdio.h>//treba da se iskopira plejlista iz jednog u drugi format
+#include <string.h>//zaglavlje barg- broj argumenata, const char *varg[] je niz pokazivaca na konstantan char
+#include<stdlib.h>
+
+typedef struct numera {//2 tipa samo da se flexuje na ljude
+	char *ime, *putanja;
+	int vreme;
+}Numera;
+typedef struct element {
+	struct numera *pesma;
+	struct element *sled;
+}Element;
+
+void citaj(FILE *ulaz, Element **prvi) { // imamo pokazivac na pokazivac jer smo u pozivu funkcije uneli adresu prvog koji je pokazivac na Element
+										//sad kad nam treba da menjamo p pisemo *p jer je p vec pokazivac na element pa ne treba dve **
+	Numera *nova = NULL;
+	Element *novi = NULL, *prethodni = NULL;
+	int i, j;
+
+	while ((i = fgetc(ulaz)) != (int)('\n'));//fgetc(pokazivac na datoteku) uzima jedan char iz datoteke,kastovanje u neki drugi tip (tip)('promenjiva konstanta stagod')
+	while ((i = fgetc(ulaz)) != (int)(EOF)) {//dok nije end of line
+
+		nova = calloc(1, sizeof(Numera));
+		nova->ime = nova->putanja = NULL;//osiguravamo se da ne pokazuju ni na sta
+
+		novi = calloc(1, sizeof(Element));
+		novi->pesma = NULL; novi->sled = NULL;
+
+		novi->pesma = nova; // pokazivac na pesmu pokazuje tamo gde pokazuje i nova
+
+		if (*prvi == NULL)
+			*prvi = novi;
+		else prethodni->sled = novi;
+
+		prethodni = novi;
+
+		while ((i = fgetc(ulaz)) != (int)(':'));
+		fscanf(ulaz, "%d", &nova->vreme);//fscanf je za citanje pod iz datoteke pises ime datoteke, pa onda isto ko scanf
+		i = fgetc(ulaz); //procitaj jedan zarez koji nam smeta i nista ne radi s njim
+
+		j = 0;
+		while ((i = fgetc(ulaz)) != (int)('\n')) {
+			if (j % 10 == 0) //treba preko poma ko ranije al mrzi me da kucam
+				nova->ime = realloc(nova->ime, (j + 10) * sizeof(char));
+			nova->ime[j++] = (char)i; //konverzija iz integera u char (jer funkcija fgetc daje rezultat integer) 
+										//ovo je inace nebezbedna konverzija jer je iz veceg u manji tip podatka al nema veze jer je ovo ASCII vred a ona je <256
+
+		}
+		nova->ime = realloc(nova->ime, (j + 1) * sizeof(char));//sad da ne trosimo previse memorije i to
+		nova->ime[j++] = '\0';
+
+		while ((i = fgetc(ulaz) != (int)('\n')));
+
+		j = 0;
+		while ((i = fgetc(ulaz)) != (int)('\n')) {
+			if (j % 10 == 0) //treba preko poma ko ranije al mrzi me da kucam
+				nova->putanja = realloc(nova->putanja, (j + 10) * sizeof(char));
+			nova->putanja[j++] = (char)i; //konverzija iz integera u char (jer funkcija fgetc daje rezultat integer) 
+										//ovo je inace nebezbedna konverzija jer je iz veceg u manji tip podatka al nema veze jer je ovo ASCII vred a ona je <256
+
+		}
+		nova->putanja = realloc(nova->putanja, (j + 1) * sizeof(char));//sad da ne trosimo previse memorije i to
+		nova->putanja[j++] = '\0';
+	}
+}
+
+void stampaj(Element *p) {
+	while (p) {
+		printf("%d\n", p->pesma->vreme); //puts msm da je jasno sta radi on putuje s
+		puts(p->pesma->ime); puts(p->pesma->putanja); //kako smo povezali liste kad smo radili unos ovo moze
+		puts("------------------------------------------------------\n");
+		p = p->sled;
+
+	}
+
+}
+
+FILE* obrada(FILE *izlaz, Element* prvi) {
+	int j = 0;
+	char string[50], *pom = NULL;
+	printf("Unesite string: \n");
+	gets(string);//gets(niz_charova) uzima jedan string s ulaza i smesta ga u niz charova, u nasem programu string!
+
+	fprintf(izlaz, "[playlist]\n\n");//upsivanje stvari u datoteku, fprintf(pokazivac na datoteku, isto ko printf)
+	while (prvi) {
+		pom = strstr(prvi->pesma->ime, string);//strstr(pokazivac na niz charova(moze i niz charova), nas niz charova koji poredimo) je funkcija koja gleda dal je nas string u vecem stringu
+												//vraca pokazivac na char pa zato moramo da se bavimo pomom
+		if (pom == NULL)
+			prvi = prvi->sled;
+		else{
+			fprintf(izlaz, "File%d=%s\n\n", ++j, prvi->pesma->putanja);
+			fprintf(izlaz, "Title%d=%s\n\n", j, prvi->pesma->ime);
+			fprintf(izlaz, "Lenght%d=%d\n\n", ++j, prvi->pesma->vreme);
+			prvi = prvi->sled;
+		}
+
+	}
+	fprintf(izlaz, "NumberOfEntries=%d\n\n", j);
+	fprintf(izlaz, "Vesion=2");
+
+	return izlaz;
+
+}
+
+int main(int barg, const char *varg[]) {//vise o uzbeniku prof Krausa na googleu, u degabingu kazes comand arguments ime fajle, ime fajla
+									  //naravno fajlovi su pejlistaM3U i plejlistaPLS plejlistaPLS
+	FILE *ulaz = NULL, *izlaz = NULL;
+	Element *prvi = NULL;
+
+	ulaz = fopen(varg[1], "r"); //fopen otvara datoteku, fopen("putanja do datoteke"), kod nas zbog argumenata varg[1], r za read
+	izlaz = fopen(varg[2], "w");//varg[0] je za ime samog programa, a sledecix n argumenata je na ostalim mestima
+
+	citaj(ulaz, &prvi); //U C-u nema prenos po referenci tako da ako nesto hocemo da menjamo moramo da saljemo njegovu adresu
+						//prima i pokazivac na datoteku jer tamo su nam podatci
+						// mogli smo i da napisemo ovako prvi = citaj(prvi) to bi vratilo vrednost nase funkcije u prvi, naravno funkcija ne bi tada bila void
+	stampaj(prvi);
+	izlaz = obrada(izlaz, prvi);//ovo smo po vrednosti jer kad ajde
+}	
